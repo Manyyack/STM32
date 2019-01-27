@@ -30,34 +30,9 @@ SOFTWARE.
 /* Includes */
 #include <stddef.h>
 #include "stm32f10x.h"
+#include "uart_driver.h"
+#include <stdio.h>
 
-char Getc_USART1()
-{
-	while(!(USART1->SR & USART_SR_RXNE));
-	return USART1->DR;
-}
-
-/*
- * Write a character through the serial port
- */
-void Putc_USART1(char CharSend)
-{
-	while(!(USART1->SR & USART_SR_TXE));
-	USART1->DR = CharSend;
-}
-
-/*
- * Write a string through the serial port
- */
-void Puts_USART1(const char * StringSend)
-{
-	uint32_t StrCount = 0;
-	while (StringSend[StrCount])
-	{
-		Putc_USART1(StringSend[StrCount]);
-		StrCount ++;
-	}
-}
 
 int main()
 {
@@ -124,28 +99,8 @@ int main()
 	 */
 	SystemCoreClockUpdate();
 
-	/*
-	 * Selects the PA9 as the USART1 RX
-	 * Selects the PA10 as the USART1 TX
-	 */
-	GPIOA->CRH = (GPIOA->CRH & 0xFFFFF00F) | 0x000004B0;
+	uart_init(115200,72000000);
 
-	/*
-	 * Enable the clock for the USART1
-	 */
-	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
-	/*
-	 * Adjusts the USART1 bit rate to
-	 * 38400 bps (for an 24MHz input clock)
-	 */
-	USART1->BRR = 0x271;
-
-	/*
-	 * Enable the USART1 Transmitter and
-	 * Receiver
-	 */
-	USART1->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 
 	/*
 	 * Turn off the LED
@@ -161,12 +116,12 @@ int main()
 		{
 		case '0':
 			GPIOA->BSRR = GPIO_BSRR_BS1; //PA1 = 1 (Led OFF)
-			Puts_USART1("LED OFF\r\n");
+			printf("LED OFF\r\n");
 			break;
 
 		default :
 			GPIOA->BSRR = GPIO_BSRR_BR1; //PA1 = 0 (Led ON)
-			Puts_USART1("LED ON\r\n");
+			printf("LED ON\r\n");
 			break;
 		}
 	}
